@@ -42,7 +42,7 @@ class RemoteSMPLSequence(RemoteNode):
         """
         return super().add_frames(poses_body=poses_body, poses_root=poses_root, trans=trans, betas=betas)
 
-    def update_frames(self, poses_body, frames, poses_root=None, trans=None, betas=None):
+    def update_frames(self, poses_body, frames, is_hand = False, poses_root=None, trans=None, betas=None):
         """
         Update frames of the remote SMPLSequence node by updating body poses.
 
@@ -57,6 +57,7 @@ class RemoteSMPLSequence(RemoteNode):
         return super().update_frames(
             poses_body=poses_body,
             frames=frames,
+            is_hand=is_hand,
             poses_root=poses_root,
             trans=trans,
             betas=betas,

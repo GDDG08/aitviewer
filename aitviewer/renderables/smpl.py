@@ -736,31 +736,38 @@ class SMPLSequence(Node):
             trans = trans[np.newaxis]
         self.trans = torch.cat((self.trans, to_torch(trans, self.dtype, self.device)))
 
-        # Append betas or zeros .
-        if betas is None:
-            # If we have only 1 frame of betas we don't need to append zeros, as the first
-            # frame of betas will be broadcasted to all frames.
-            if betas.shape[0] > 1:
-                self.betas = torch.cat(
-                    (
-                        self.betas,
-                        to_torch(
-                            torch.zeros([1, self.smpl_layer.num_betas]),
-                            self.dtype,
-                            self.device,
-                        ),
-                    )
-                )
-        else:
-            if len(betas.shape) == 1:
-                betas = betas[np.newaxis]
-            self.betas = torch.cat((self.betas, to_torch(betas, self.dtype, self.device)))
+        # # Append betas or zeros .
+        # if betas is None:
+        #     # If we have only 1 frame of betas we don't need to append zeros, as the first
+        #     # frame of betas will be broadcasted to all frames.
+        #     if betas.shape[0] > 1:
+        #         self.betas = torch.cat(
+        #             (
+        #                 self.betas,
+        #                 to_torch(
+        #                     torch.zeros([1, self.smpl_layer.num_betas]),
+        #                     self.dtype,
+        #                     self.device,
+        #                 ),
+        #             )
+        #         )
+        # else:
+        # if len(betas.shape) == 1:
+        #     betas = betas[np.newaxis]
+        # self.betas = torch.cat((self.betas, to_torch(betas, self.dtype, self.device)))
 
         self.n_frames = len(self.poses_body)
         self.redraw()
 
-    def update_frames(self, poses_body, frames, poses_root=None, trans=None, betas=None):
-        self.poses_body[frames] = to_torch(poses_body, self.dtype, self.device)
+    def update_frames(self, poses_body, frames, is_hand=False, poses_root=None, trans=None, betas=None):
+        if is_hand:
+            poses_left_hand = poses_body[:, : self.smpl_layer.bm.NUM_HAND_JOINTS * 3]
+            poses_right_hand = poses_body[:, self.smpl_layer.bm.NUM_HAND_JOINTS * 3 :]
+            self.poses_left_hand[frames] = to_torch(poses_left_hand, self.dtype, self.device)
+            self.poses_right_hand[frames] = to_torch(poses_right_hand, self.dtype, self.device)
+        else:
+            self.poses_body[frames] = to_torch(poses_body, self.dtype, self.device)
+
         if poses_root is not None:
             self.poses_root[frames] = to_torch(poses_root, self.dtype, self.device)
         if trans is not None:
@@ -782,3 +789,13 @@ class SMPLSequence(Node):
 
         self.n_frames = len(self.poses_body)
         self.redraw()
+
+    # def udpate_frames_hand(self, poses_hand, frames):
+    #     poses_left_hand = poses_hand[:smpl_layer.bm.NUM_HAND_JOINTS * 3,:]
+    #     poses_right_hand = poses_hand[smpl_layer.bm.NUM_HAND_JOINTS * 3:,:]
+    #     self.poses_left_hand[frames] = to_torch(poses_left_hand, self.dtype, self.device)
+    #     self.poses_right_hand[frames] = to_torch(poses_right_hand, self.dtype, self.device)
+    #     self.redraw()
+
+    # def add_frames_with_hand(self, poses_body, poses_hands, poses_root):
+    #     pass
