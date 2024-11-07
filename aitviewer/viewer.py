@@ -264,6 +264,7 @@ class Viewer(moderngl_window.WindowConfig):
         self.scene.light_mode = "dark" if C.dark_mode else "default"
         self.lock_selection = False
         self.visualize = False
+        self.playback_keep_last_frame = C.playback_keep_last_frame
 
         self._pan_camera = False
         self._rotate_camera = False
@@ -530,13 +531,27 @@ class Viewer(moderngl_window.WindowConfig):
         """The main drawing function."""
 
         if self.run_animations:
-            # Compute number of frames to advance by.
-            frames = (int)((time - self._last_frame_rendered_at) * self.playback_fps)
+            if self.playback_keep_last_frame:
+                left_over_num = self.scene.n_frames - self.scene.current_frame_id
+                # target: 1 frames left
+                fps = max(1, self.playback_fps * (left_over_num - 1) * 0.3)
+            else:
+                fps = self.playback_fps
+            frames = (int)((time - self._last_frame_rendered_at) * fps)
             if frames > 0:
                 if self.playback_without_skipping:
                     frames = 1
-                self.scene.current_frame_id = (self.scene.current_frame_id + frames) % self.scene.n_frames
-                self._last_frame_rendered_at += frames * (1.0 / self.playback_fps)
+
+                frame_id_new = self.scene.current_frame_id + frames
+                if self.playback_keep_last_frame:
+                    self.scene.current_frame_id = min(self.scene.n_frames, frame_id_new)
+                else:
+                    self.scene.current_frame_id = frame_id_new % self.scene.n_frames
+
+            self._last_frame_rendered_at += frames * (1.0 / fps)
+        else:
+            if self.playback_keep_last_frame:
+                self.scene.current_frame_id = self.scene.n_frames - 1
 
         # Update camera matrices that will be used for rendering
         if isinstance(self.scene.camera, ViewerCamera):
@@ -1106,7 +1121,7 @@ class Viewer(moderngl_window.WindowConfig):
     def gui_playback(self):
         """GUI to control playback settings."""
         imgui.set_next_window_position(50, 100 + self.window_size[1] * 0.7, imgui.FIRST_USE_EVER)
-        imgui.set_next_window_size(self.window_size[0] * 0.4, self.window_size[1] * 0.175, imgui.FIRST_USE_EVER)
+        imgui.set_next_window_size(self.window_size[0] * 0.4, self.window_size[1] * 0.2, imgui.FIRST_USE_EVER)
         expanded, _ = imgui.begin("Playback", None)
         if expanded:
             u, run_animations = imgui.checkbox(
@@ -1156,6 +1171,9 @@ class Viewer(moderngl_window.WindowConfig):
         if imgui.collapsing_header("Advanced options")[0]:
             _, self.playback_without_skipping = imgui.checkbox(
                 "Playback without skipping", self.playback_without_skipping
+            )
+            _, self.playback_keep_last_frame = imgui.checkbox(
+                "Keep Last Frame", self.playback_keep_last_frame
             )
         imgui.end()
 

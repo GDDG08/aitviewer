@@ -28,6 +28,7 @@ export_dir: "../export"
 playback_fps: 60
 scene_fps: 60
 run_animations: False
+playback_keep_last_frame : False
 dark_mode: False
 shadows_enabled: True
 auto_set_floor: True
