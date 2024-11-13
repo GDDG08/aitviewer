@@ -716,7 +716,7 @@ class SMPLSequence(Node):
         # Only render outline of the mesh, skipping skeleton and rigid bodies.
         self.mesh_seq.render_outline(*args, **kwargs)
 
-    def add_frames(self, poses_body, poses_root=None, trans=None, betas=None):
+    def add_frames(self, poses_body, poses_hand=None, poses_root=None, trans=None, betas=None):
         # Append poses_body.
         if len(poses_body.shape) == 1:
             poses_body = poses_body[np.newaxis]
@@ -756,17 +756,43 @@ class SMPLSequence(Node):
         #     betas = betas[np.newaxis]
         # self.betas = torch.cat((self.betas, to_torch(betas, self.dtype, self.device)))
 
+        if poses_hand is None:
+            if self.poses_left_hand is not None:
+                self.poses_left_hand = torch.cat(
+                    self.poses_left_hand,
+                    to_torch(
+                        torch.zeros([len(poses_body), self.smpl_layer.bm.NUM_HAND_JOINTS * 3]),
+                        self.dtype,
+                        self.device,
+                    ),
+                )
+            if self.poses_right_hand is not None:
+                self.poses_right_hand = torch.cat(
+                    self.poses_right_hand,
+                    to_torch(
+                        torch.zeros([len(poses_body), self.smpl_layer.bm.NUM_HAND_JOINTS * 3]), self.dtype, self.device
+                    ),
+                )
+        else:
+            if len(poses_hand.shape) == 1:
+                poses_hand = poses_hand[np.newaxis]
+            poses_left_hand = poses_hand[:, : self.smpl_layer.bm.NUM_HAND_JOINTS * 3]
+            poses_right_hand = poses_hand[:, self.smpl_layer.bm.NUM_HAND_JOINTS * 3 :]
+
+            self.poses_left_hand = torch.cat((self.poses_left_hand, to_torch(poses_left_hand, self.dtype, self.device)))
+            self.poses_right_hand = torch.cat((self.poses_right_hand, to_torch(poses_right_hand, self.dtype, self.device)))
+
         self.n_frames = len(self.poses_body)
         self.redraw()
 
-    def update_frames(self, poses_body, frames, is_hand=False, poses_root=None, trans=None, betas=None):
+    def update_frames(self, poses, frames, is_hand=False, poses_root=None, trans=None, betas=None):
         if is_hand:
-            poses_left_hand = poses_body[:, : self.smpl_layer.bm.NUM_HAND_JOINTS * 3]
-            poses_right_hand = poses_body[:, self.smpl_layer.bm.NUM_HAND_JOINTS * 3 :]
+            poses_left_hand = poses[:, : self.smpl_layer.bm.NUM_HAND_JOINTS * 3]
+            poses_right_hand = poses[:, self.smpl_layer.bm.NUM_HAND_JOINTS * 3 :]
             self.poses_left_hand[frames] = to_torch(poses_left_hand, self.dtype, self.device)
             self.poses_right_hand[frames] = to_torch(poses_right_hand, self.dtype, self.device)
         else:
-            self.poses_body[frames] = to_torch(poses_body, self.dtype, self.device)
+            self.poses[frames] = to_torch(poses, self.dtype, self.device)
 
         if poses_root is not None:
             self.poses_root[frames] = to_torch(poses_root, self.dtype, self.device)

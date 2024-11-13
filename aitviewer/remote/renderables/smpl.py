@@ -28,7 +28,7 @@ class RemoteSMPLSequence(RemoteNode):
             **kwargs,
         )
 
-    def add_frames(self, poses_body, poses_root=None, trans=None, betas=None):
+    def add_frames(self, poses_body, poses_hand=None, poses_root=None, trans=None, betas=None):
         """
         Add frames to the remote SMPLSequence node by adding body poses.
 
@@ -40,14 +40,14 @@ class RemoteSMPLSequence(RemoteNode):
           applied to all joints and vertices.
 
         """
-        return super().add_frames(poses_body=poses_body, poses_root=poses_root, trans=trans, betas=betas)
+        return super().add_frames(poses_body=poses_body, poses_hand=poses_hand, poses_root=poses_root, trans=trans, betas=betas)
 
-    def update_frames(self, poses_body, frames, is_hand = False, poses_root=None, trans=None, betas=None):
+    def update_frames(self, poses, frames, is_hand=False, poses_root=None, trans=None, betas=None):
         """
         Update frames of the remote SMPLSequence node by updating body poses.
 
-        :param poses_body: An np array of shape (N, N_JOINTS*3) or (N_JOINTS) containing the
-          pose parameters of the body, i.e. without hands or face parameters.
+        :param poses: An np array of shape (N, N_JOINTS*3) or (N_JOINTS) containing the
+          pose parameters of the body, i.e. without hands or face parameters. OR hands
         :param poses_root: An optional np array of shape (N, 3) or (3) containing the global root orientation.
         :param betas: An optional np array of shape (N, N_BETAS) or (N_BETAS) containing the shape parameters.
         :param trans: An optional np array of shape (N, 3) or (3) containing a global translation that is
@@ -55,7 +55,7 @@ class RemoteSMPLSequence(RemoteNode):
         """
 
         return super().update_frames(
-            poses_body=poses_body,
+            poses=poses,
             frames=frames,
             is_hand=is_hand,
             poses_root=poses_root,
