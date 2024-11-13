@@ -792,7 +792,7 @@ class SMPLSequence(Node):
             self.poses_left_hand[frames] = to_torch(poses_left_hand, self.dtype, self.device)
             self.poses_right_hand[frames] = to_torch(poses_right_hand, self.dtype, self.device)
         else:
-            self.poses[frames] = to_torch(poses, self.dtype, self.device)
+            self.poses_body[frames] = to_torch(poses, self.dtype, self.device)
 
         if poses_root is not None:
             self.poses_root[frames] = to_torch(poses_root, self.dtype, self.device)
